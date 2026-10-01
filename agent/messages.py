@@ -1,17 +1,19 @@
-from dataclasses import dataclasses
+from dataclasses import dataclass
 from typing import Any
 
-@dataclasses
+@dataclass
 class Message:
     role: str
     content: str
 
-@dataclasses
+
+@dataclass
 class Action:
     tool: str
     arguements: dict[str, Any]
 
-@dataclasses
+
+@dataclass
 class Observation:
     content: str
     success: bool
