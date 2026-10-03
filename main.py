@@ -1,24 +1,52 @@
 # 2026.9.28 begin coding ...
-# 定义agent世界里面的基本数据：message、action、observation
-
+from pathlib import Path
 from agent.agent import Agent
 from agent.model import FakeModel
-from agent.tools import EchoTool, ToolRegistry
+from agent.tools import EchoTool, ToolRegistry, ShellTool
+# 1. main.py 创建 FakeModel
 
-# model = FakeModel()
-# agent = Agent(model)
-# result = agent.run("fix the bug")
+# 2. main.py 创建 ShellTool
 
-# print(result)
+# 3. ShellTool 注册进 ToolRegistry
 
-echo_tool = EchoTool()
-tools = ToolRegister([
-    echo_tool
+# 4. 创建 Agent
+
+# 5. agent.run(task)
+
+# 6. task → Message(user)
+
+# 7. FakeModel.generate()
+#       ↓
+#    Action(shell, pwd)
+
+# 8. ToolRegistry.get("shell")
+#       ↓
+#    ShellTool
+
+# 9. ShellTool.execute("pwd")
+#       ↓
+#    OS 真正执行 pwd
+
+# 10. Observation
+#       ↓
+#     Message(tool)
+
+# 11. FakeModel.generate()
+#       ↓
+#     final_answer
+
+# 12. Agent return
+model = FakeModel()
+
+tools = ToolRegistry([
+    ShellTool(working_dir=Path.cwd())
     ])
-tool = tools.get("echo")
 
-tool.execute({
-    "text": "Hello Agent1001"
-})
+agent = Agent(
+    model=model,
+    tools=tools,
+    max_steps=10
+)
 
-print(obser)
+result = agent.run("Show me the current working directory.")
+print(result)
