@@ -16,10 +16,6 @@ class ToolCall:
     tool_call_id: str
     arguments: dict[str, Any]
 
-# @dataclass
-# class Finish:
-#     content: str
-
 #AssistantMessage → Model.generate() 的返回结果
 @dataclass
 class AssistantMessage:

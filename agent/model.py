@@ -4,6 +4,7 @@ from openai import OpenAI
 from abc import ABC, abstractmethod
 from .messages import Message, AssistantMessage, Observation, ToolCall, HistoryItem
 from .tools import ToolRegistry
+from .trajectory import Trajectory
 
 
 class Model(ABC):
@@ -12,12 +13,14 @@ class Model(ABC):
     def generate(self, messages: list[HistoryItem]) -> AssistantMessage:
         pass
     # 真实的LLM可能返回json也可能是API原生的function calling。
-    # 不同模型供应商的返回格式由 Model 层转换成 AssistantMessage，Agent loop不需要知道模型供应商的具体格式。
+    # 不同模型供应商的返回格式由 Model 层转换成 AssistantMessage，
+    # Agent loop不需要知道模型供应商的具体格式。
 
 
 class DeepSeekModel(Model):
 
     def __init__(self, tools: ToolRegistry):
+        self.trajectory: Trajectory | None = None
         self.tools = tools
         self.client = OpenAI(
             api_key=os.environ["DEEPSEEK_API_KEY"],
@@ -90,6 +93,8 @@ class DeepSeekModel(Model):
         # 需要转换成符合 LLM 格式的消息
         api_messages = self._convert_messages(messages)
 
+        self.trajectory.record_model_input(api_messages)
+
         response = self.client.chat.completions.create(
             model="deepseek-flash",
             messages=api_messages,
@@ -97,6 +102,8 @@ class DeepSeekModel(Model):
         )
 
         assistant_message = response.choices[0].message
+
+        self.trajectory.record_model_output(assistant_message)
 
         #此处涉及从 LLM response 转换成我们的AssistantMessage
         tool_calls = []
@@ -113,6 +120,13 @@ class DeepSeekModel(Model):
             content=assistant_message.content,
             tool_calls=tool_calls
         )
+
+
+    def set_trajectory(
+        self,
+        trajectory: Trajectory
+    ) -> None:
+        self.trajectory = trajectory
 
 #DeepSeek真实response
 # ChatCompletion(
