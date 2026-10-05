@@ -1,8 +1,9 @@
 # 2026.9.28 begin coding ...
 from pathlib import Path
 from agent.agent import Agent
-from agent.model import FakeModel
-from agent.tools import EchoTool, ToolRegistry, ShellTool
+from agent.model import DeepSeekModel
+from agent.tools import ToolRegistry, ShellTool
+from agent.messages import Message
 # 1. main.py 创建 FakeModel
 
 # 2. main.py 创建 ShellTool
@@ -36,11 +37,19 @@ from agent.tools import EchoTool, ToolRegistry, ShellTool
 #     final_answer
 
 # 12. Agent return
-model = FakeModel()
 
 tools = ToolRegistry([
     ShellTool(working_dir=Path.cwd())
     ])
+
+model = DeepSeekModel(tools)
+
+# model.generate([
+#     Message(
+#         role="user",
+#         content="Please show me the files in the current directory."
+#     )
+# ])
 
 agent = Agent(
     model=model,
@@ -48,5 +57,5 @@ agent = Agent(
     max_steps=10
 )
 
-result = agent.run("Show me the current working directory.")
+result = agent.run("Show me all the recursive files in the current working directory.")
 print(result)

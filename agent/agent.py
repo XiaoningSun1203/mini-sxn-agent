@@ -1,4 +1,4 @@
-from .messages import Message
+from .messages import HistoryItem, Message, Observation
 from .model import Model
 from .tools import ToolRegistry
 
@@ -13,7 +13,7 @@ class Agent:
         self.model = model # self.model 是给对象添加 model 属性
         self.tools = tools
         self.max_steps = max_steps
-        self.messages: list[Message] = []
+        self.messages: list[HistoryItem] = []
 
     def run(self, task: str) -> str:
 
@@ -24,36 +24,23 @@ class Agent:
             )
         )
 
+        # Loop
         for step in range(self.max_steps):
-            action = self.model.generate(self.messages)
+            assistant_message = self.model.generate(self.messages)
+            # 先保存模型这一轮的完整输出
+            self.messages.append(assistant_message)
 
-            if action.final_answer is not None:
-                return action.final_answer
+            #没有 ToolCall → 模型已经给出最终回答
+            if not assistant_message.tool_calls:
+                return assistant_message.content or "Task Finish"
 
-            if action.tool is None:
-                return "Model returned neither a tool nor a final answer."
+            # 一次 AssistantMessage 可能有多个 ToolCall
+            for tool_call in assistant_message.tool_calls:
+                observation = self.tools.execute(tool_call)
+                self.messages.append(observation)
 
-            tool = self.tools.get(action.tool)
-
-            if tool is None:
-                observation = (
-                    f"Unknow tool: {action.tool}"
-                )
-            else:
-                observation = tool.execute(action.arguements)
-                observation_content = observation.content
-                print(f"step {step} :observation_content={observation_content}")
-
-            self.messages.append(
-                Message(
-                    role="tool",
-                    content=observation_content
-                )
-            )
+            print(f"step {step} : done")
 
         return "Agent stopped: maximum steps reached."
-        
-
-        
 
 
