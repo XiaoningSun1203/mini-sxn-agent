@@ -19,12 +19,19 @@ class Model(ABC):
 
 class DeepSeekModel(Model):
 
-    def __init__(self, tools: ToolRegistry):
+    def __init__(
+            self, 
+            tools: ToolRegistry,
+            model_name: str,
+            base_url: str,
+            api_key_env: str):
         self.trajectory: Trajectory | None = None
         self.tools = tools
+        self.model_name = model_name
+
         self.client = OpenAI(
-            api_key=os.environ["DEEPSEEK_API_KEY"],
-            base_url="https://api.deepseek.com"
+            api_key=os.environ[api_key_env],
+            base_url=base_url
         )
 
     # Model Adaptor
@@ -96,7 +103,7 @@ class DeepSeekModel(Model):
         self.trajectory.record_model_input(api_messages)
 
         response = self.client.chat.completions.create(
-            model="deepseek-flash",
+            model=self.model_name,
             messages=api_messages,
             tools=self.tools.schemas()
         )

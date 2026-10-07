@@ -4,6 +4,10 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+# Step N
+# ├── request        # 这一轮真正送给模型的输入
+# ├── response       # 模型真正返回的原始输出
+# └── observations   # 这一轮所有 ToolCall 的实际执行结果
 
 class Trajectory:
 

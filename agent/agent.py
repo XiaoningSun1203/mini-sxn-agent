@@ -3,26 +3,42 @@ from .model import Model
 from .tools import ToolRegistry
 from .trajectory import Trajectory
 
+
 class Agent:
 
     def __init__(
             self,
             model: Model,
             tools: ToolRegistry,
-            max_steps: int = 10,
-            step_mode: bool = False
+            max_steps: int = 30,
+            step_mode: bool = False,
+            system_prompt: str = "",
+            trajectory_dir: str = "trajectories"
     ):
         self.model = model # self.model 是给对象添加 model 属性
         self.tools = tools
         self.max_steps = max_steps
         self.step_mode = step_mode
+        self.system_prompt = system_prompt
+        self.trajectory_dir = trajectory_dir
         self.messages: list[HistoryItem] = []
 
     def run(self, task: str) -> str:
+
         # agent 和 model 共享同一个 trajectory 文件，相同的task会记录到同一个文件里
-        trajectory = Trajectory(task)
+        trajectory = Trajectory(task, output_dir=self.trajectory_dir)
         self.model.set_trajectory(trajectory)
 
+        # 每个任务使用独立的消息历史
+        self.messages = []
+
+        if self.system_prompt.strip():
+            self.messages.append(
+                Message(
+                    role="system",
+                    content=self.system_prompt
+                )
+            )
         self.messages.append(
             Message(
                 role="user",
@@ -64,4 +80,3 @@ class Agent:
     def _wait_for_continue(self, step: int) -> None:
         if self.step_mode:
             input(f"[step {step}] Press 'Enter' to continue ...")
-

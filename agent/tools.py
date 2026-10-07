@@ -20,8 +20,8 @@ from pathlib import Path
 # │
 # └── 真正执行操作
 
-
-class Tool(ABC):  # 执行者
+# 执行者
+class Tool(ABC):
 
     @property
     @abstractmethod
@@ -112,16 +112,18 @@ class ToolRegistry:
 #                         Observation
 
 
-
 class EchoTool(Tool):
 
     @property
     def name(self) -> str:
         return "echo"
+
+    #给 LLM 看的rule
     @property
     def description(self) -> str:
         return "Return the provided text."
 
+    #给 LLM 看的rule
     @property
     def parameters(self) -> dict[str, Any]:
         return {
@@ -135,6 +137,7 @@ class EchoTool(Tool):
             "required": ["text"]
         }
 
+    #给Harness执行的
     def execute(self, tool_call_id: str, arguments: dict[str, Any]) -> Observation:
         text = arguments.get("text")
         if text is None:
@@ -163,12 +166,14 @@ class ShellTool(Tool):
     def name(self) -> str:
         return "shell"
 
+    #给 LLM 看的rule
     @property
-    def description(self) -> str:  #给 LLM 看的rule
+    def description(self) -> str:
         return "Execute a shell command in the workspace."
 
+    #给 LLM 看的rule
     @property
-    def parameters(self) -> dict[str, Any]:  #给 LLM 看的rule
+    def parameters(self) -> dict[str, Any]:
         return {
             "type": "object",
             "properties": {
@@ -180,7 +185,8 @@ class ShellTool(Tool):
             "required": ["command"]
         }
 
-    def execute(self, tool_call_id: str, arguments: dict[str, Any]) -> Observation:  #给Harness执行的
+    #给Harness执行的
+    def execute(self, tool_call_id: str, arguments: dict[str, Any]) -> Observation:
         command = arguments.get("command")
 
         if not isinstance(command, str) or not command.strip():
@@ -220,4 +226,185 @@ class ShellTool(Tool):
             success=result.returncode == 0
         )
 
+
+class ReadFileTool(Tool):
+
+    def __init__(self, working_dir: Path):
+        self.working_dir = working_dir.resolve() #把路径转换成一个更规范的绝对路径
+    
+    @property
+    def name(self) -> str:
+        return "read_file"
+
+    #给 LLM 看的rule
+    @property
+    def description(self) -> str:
+        return "Read the contents of a text file in the current workspace."
+
+    #给 LLM 看的rule
+    @property
+    def parameters(self) -> dict[str, Any]:
+        return {
+            "type": "object",
+            "properties": {
+                "command": {
+                    "type": "string",
+                    "description": "File path relative to the workspace."
+                }
+            },
+            "required": ["path"]
+        }
+
+    #给Harness执行的
+    def execute(self, tool_call_id: str, arguments: dict[str, Any]) -> Observation:
+        path_string = arguments.get("path")
+
+        if not isinstance(path_string, str) or not path_string.strip():
+            return Observation(
+                tool=self.name,
+                tool_call_id=tool_call_id,
+                content="Missing or invalid argument: path",
+                success=False
+            )
+
+        file_path = (self.working_dir / path_string).resolve()
+
+        try:
+            file_path.relative_to(self.working_dir)
+        except ValueError:
+            return Observation(
+                tool=self.name,
+                tool_call_id=tool_call_id,
+                content=f"Path is outside workspace: {path_string}",
+                success=False
+            )
+
+        if not file_path.exists():
+            return Observation(
+                tool=self.name,
+                tool_call_id=tool_call_id,
+                content=f"File does not exist: {path_string}",
+                success=False
+            )
+
+        if not file_path.is_file():
+            return Observation(
+                tool=self.name,
+                tool_call_id=tool_call_id,
+                content=f"Path is not a file: {path_string}",
+                success=False
+            )
+
+        try:
+            #Path.read_text() 会读取文本文件并返回 str
+            content = file_path.read_text(encoding="utf-8")
+        except Exception as error:
+            return Observation(
+                tool=self.name,
+                tool_call_id=tool_call_id,
+                content=f"Failed to read file: {error}",
+                success=False
+            )
+
+        return Observation(
+            tool=self.name,
+            tool_call_id=tool_call_id,
+            content=content,
+            success=True
+        )
+
+
+class WriteFileTool(Tool):
+
+    def __init__(self, working_dir: Path):
+        self.working_dir = working_dir.resolve()
+
+    @property
+    def name(self) -> str:
+        return "write_file"
+
+    @property
+    def description(self) -> str:
+        return "Write text content to a file in the current workspace."
+
+    @property
+    def parameters(self) -> dict[str, Any]:
+        return {
+            "type": "object",
+            "properties": {
+                "path": {
+                    "type": "string",
+                    "description": "File path relative to the workspace."
+                },
+                "content": {
+                    "type": "string",
+                    "description": "The complete text content to write."
+                }
+            },
+            "required": ["path", "content"]
+        }
+
+    def execute(
+        self,
+        tool_call_id: str,
+        arguments: dict[str, Any]
+    ) -> Observation:
+
+        path_string = arguments.get("path")
+        content = arguments.get("content")
+
+        if not isinstance(path_string, str) or not path_string.strip():
+            return Observation(
+                tool=self.name,
+                tool_call_id=tool_call_id,
+                content="Missing or invalid argument: path",
+                success=False
+            )
+
+        if not isinstance(content, str):
+            return Observation(
+                tool=self.name,
+                tool_call_id=tool_call_id,
+                content="Missing or invalid argument: content",
+                success=False
+            )
+
+        file_path = (self.working_dir / path_string).resolve()
+
+        try:
+            file_path.relative_to(self.working_dir)
+        except ValueError:
+            return Observation(
+                tool=self.name,
+                tool_call_id=tool_call_id,
+                content=f"Path is outside workspace: {path_string}",
+                success=False
+            )
+
+        try:
+            file_path.parent.mkdir(
+                parents=True,
+                exist_ok=True
+            )
+
+            # 真正执行写文件动作
+            file_path.write_text(
+                content,
+                encoding="utf-8"
+            )
+
+        except Exception as error:
+            return Observation(
+                tool=self.name,
+                tool_call_id=tool_call_id,
+                content=f"Failed to write file: {error}",
+                success=False
+            )
+
+        return Observation(
+            tool=self.name,
+            tool_call_id=tool_call_id,
+            content=f"File written successfully: {path_string}",
+            success=True
+        )
 
