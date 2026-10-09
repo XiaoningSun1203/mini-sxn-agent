@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from .messages import ToolCall, Observation
+from .environment import Environment
 from typing import Any
 import subprocess
 from pathlib import Path
@@ -158,9 +159,8 @@ class EchoTool(Tool):
 
 class ShellTool(Tool):
 
-    def __init__(self, working_dir: Path, timeout: int = 30):
-        self.working_dir = working_dir
-        self.timeout = timeout
+    def __init__(self, environment: Environment):
+        self.environment=environment
 
     @property
     def name(self) -> str:
@@ -198,19 +198,12 @@ class ShellTool(Tool):
             )
 
         try:
-            result = subprocess.run(
-                command,
-                shell=True,            # 通过 shell 执行这条字符串命令
-                cwd=self.working_dir,  # current working directory
-                capture_output=True,   # 不要只是往终端打印，把输出保存到 result 里面
-                text=True,             # 让output直接以字符串形式出来，而不是其他形式
-                timeout=self.timeout   # 超过值会抛出 TimeoutExpired
-            )
-        except subprocess.TimeoutExpired:
+            result = self.environment.run_command(command)
+        except subprocess.TimeoutExpired as error:
             return Observation(
                 tool=self.name,
                 tool_call_id= tool_call_id,
-                content=f"Command timed out after {self.timeout} seconds",
+                content=f"Command timed out after {error.timeout} seconds",
                 success=False
             )
 
@@ -229,8 +222,8 @@ class ShellTool(Tool):
 
 class ReadFileTool(Tool):
 
-    def __init__(self, working_dir: Path):
-        self.working_dir = working_dir.resolve() #把路径转换成一个更规范的绝对路径
+    def __init__(self, environment: Environment):
+        self.environment=environment #把路径转换成一个更规范的绝对路径
     
     @property
     def name(self) -> str:
@@ -247,7 +240,7 @@ class ReadFileTool(Tool):
         return {
             "type": "object",
             "properties": {
-                "command": {
+                "path": {
                     "type": "string",
                     "description": "File path relative to the workspace."
                 }
@@ -259,6 +252,7 @@ class ReadFileTool(Tool):
     def execute(self, tool_call_id: str, arguments: dict[str, Any]) -> Observation:
         path_string = arguments.get("path")
 
+        # tool层检查参数类型、是否缺失, environment层进行路径解析和范围检查
         if not isinstance(path_string, str) or not path_string.strip():
             return Observation(
                 tool=self.name,
@@ -267,43 +261,15 @@ class ReadFileTool(Tool):
                 success=False
             )
 
-        file_path = (self.working_dir / path_string).resolve()
-
-        try:
-            file_path.relative_to(self.working_dir)
-        except ValueError:
-            return Observation(
-                tool=self.name,
-                tool_call_id=tool_call_id,
-                content=f"Path is outside workspace: {path_string}",
-                success=False
-            )
-
-        if not file_path.exists():
-            return Observation(
-                tool=self.name,
-                tool_call_id=tool_call_id,
-                content=f"File does not exist: {path_string}",
-                success=False
-            )
-
-        if not file_path.is_file():
-            return Observation(
-                tool=self.name,
-                tool_call_id=tool_call_id,
-                content=f"Path is not a file: {path_string}",
-                success=False
-            )
-
         try:
             #Path.read_text() 会读取文本文件并返回 str
-            content = file_path.read_text(encoding="utf-8")
-        except Exception as error:
+            content = self.environment.read_file(path_string)
+        except (OSError, ValueError, RuntimeError) as error:
             return Observation(
                 tool=self.name,
                 tool_call_id=tool_call_id,
                 content=f"Failed to read file: {error}",
-                success=False
+                success=False,
             )
 
         return Observation(
@@ -316,8 +282,8 @@ class ReadFileTool(Tool):
 
 class WriteFileTool(Tool):
 
-    def __init__(self, working_dir: Path):
-        self.working_dir = working_dir.resolve()
+    def __init__(self, environment: Environment):
+        self.environment = environment
 
     @property
     def name(self) -> str:
@@ -352,7 +318,7 @@ class WriteFileTool(Tool):
 
         path_string = arguments.get("path")
         content = arguments.get("content")
-
+        # tool层检查参数类型、是否缺失, environment层进行路径解析和范围检查
         if not isinstance(path_string, str) or not path_string.strip():
             return Observation(
                 tool=self.name,
@@ -369,36 +335,14 @@ class WriteFileTool(Tool):
                 success=False
             )
 
-        file_path = (self.working_dir / path_string).resolve()
-
         try:
-            file_path.relative_to(self.working_dir)
-        except ValueError:
-            return Observation(
-                tool=self.name,
-                tool_call_id=tool_call_id,
-                content=f"Path is outside workspace: {path_string}",
-                success=False
-            )
-
-        try:
-            file_path.parent.mkdir(
-                parents=True,
-                exist_ok=True
-            )
-
-            # 真正执行写文件动作
-            file_path.write_text(
-                content,
-                encoding="utf-8"
-            )
-
-        except Exception as error:
+            self.environment.write_file(path_string, content)
+        except (OSError, ValueError, RuntimeError) as error:
             return Observation(
                 tool=self.name,
                 tool_call_id=tool_call_id,
                 content=f"Failed to write file: {error}",
-                success=False
+                success=False,
             )
 
         return Observation(
