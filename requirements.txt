@@ -1,0 +1,27 @@
+# mini-sxn-agent 的运行时依赖
+#
+# 只有一个:项目通过 OpenAI 兼容接口调用 DeepSeek,
+# 因此只需要官方 openai SDK,不需要任何 agent 框架。
+#
+# 代码使用新版客户端写法(OpenAI() / client.chat.completions.create),
+# 从 1.0.0 起即可;该 API 面在 1.x / 2.x / 3.x 之间保持稳定,
+# 故只设下限、不锁上限。
+#
+# 注意:还需要 Python >= 3.11 —— main.py 用了标准库 tomllib(3.11 才加入),
+# messages.py 用了 X | Y 联合类型注解(3.10 起支持),两者取高者。
+# requirements.txt 本身约束不了解释器版本,这条只是说明,不会拦住低版本。
+
+# Runtime dependencies for mini-sxn-agent.
+#
+# Just one: the project talks to DeepSeek through its OpenAI-compatible API,
+# so the official openai SDK is all it needs -- no agent framework required.
+#
+# The code uses the modern client API (OpenAI() / client.chat.completions.create),
+# available since 1.0.0. That surface has stayed stable across 1.x / 2.x / 3.x,
+# so this pins a lower bound only, with no upper cap.
+#
+# Note: Python >= 3.11 is also required -- main.py uses the stdlib tomllib
+# (added in 3.11), and messages.py uses X | Y union annotations (3.10+).
+# requirements.txt cannot constrain the interpreter version; this is a note only.
+
+openai>=1.0.0
