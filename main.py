@@ -5,24 +5,22 @@ from agent.model import DeepSeekModel
 from agent.tools import ToolRegistry, ShellTool, ReadFileTool, WriteFileTool
 from agent.messages import Message
 from agent.environment import LocalEnvironment
+from agent.configLoader import ConfigLoader
 import tomllib
 
 
 project_dir = Path(__file__).resolve().parent  #得到当前文件所在路径的上一级目录
-config_path = project_dir / "agent" / "config.toml"
+config_path = project_dir / "config.toml"
 with config_path.open("rb") as file:
     config = tomllib.load(file)
 
-agent_config = config["agent"]
-model_config = config["model"]
-working_dir = (project_dir / agent_config["working_dir"]).resolve()
-
-system_prompt_path = (project_dir / agent_config["system_prompt_file"])
-system_prompt = system_prompt_path.read_text(encoding="utf-8")
-
+config_loader = ConfigLoader()
+agent_config = config_loader.get_agent_config(config["agent"])
+model_config = config_loader.get_model_config(config["model"])
+permission_config = config_loader.get_model_config(config["permission_config"])
 trajectory_dir = (project_dir / config["trajectory"]["directory"]).resolve()
 
-environment = LocalEnvironment(working_dir=working_dir, timeout=30)
+environment = LocalEnvironment(working_dir=agent_config.working_dir, timeout=30)
 
 tools = ToolRegistry([
     ShellTool(environment),
@@ -32,16 +30,13 @@ tools = ToolRegistry([
 
 model = DeepSeekModel(
     tools=tools,
-    model_name=model_config["name"],
-    base_url=model_config["base_url"],
-    api_key_env=model_config["api_key_env"])
+    model_config=model_config)
 
 agent = Agent(
     model=model,
     tools=tools,
-    max_steps=agent_config["max_steps"],
-    step_mode=agent_config["step_mode"],
-    system_prompt=system_prompt,
+    agent_config=agent_config,
+    permission_config=permission_config,
     trajectory_dir=str(trajectory_dir)
 )
 

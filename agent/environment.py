@@ -44,6 +44,9 @@ class LocalEnvironment(Environment):
     def read_file(self, path_string: str) -> str:
         file_path = (self.working_dir / path_string).resolve()
 
+        # 检查路径是否越界
+        file_path.relative_to(self.working_dir)
+
         # 真正执行read文件动作
         return file_path.read_text(encoding="utf-8")
 
@@ -148,7 +151,7 @@ class DockerEnvironment(Environment):
         self.container_id = None
 
     def read_file(self, path_string: str) -> str:
-        raise NotImplementedError("Docker 文件读取尚未实现")
+        raise NotImplementedError("not implement read action for Docker file")
 
     def write_file(self, path_string: str, content: str) -> None:
-        raise NotImplementedError("Docker 文件写入尚未实现")
+        raise NotImplementedError("not implement write action for Docker file")
