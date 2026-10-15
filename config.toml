@@ -5,7 +5,7 @@ api_key_env = "DEEPSEEK_API_KEY" #从哪个环境变量读取密钥
 
 [agent]
 max_steps = 20 #最多运行多少轮
-step_mode = true #是否每轮按 Enter 继续
+step_mode = false #是否每轮按 Enter 继续
 working_dir = "." #工具的工作目录,当前使用 Path.cwd()
 system_prompt_file = "prompts/system.md" #系统指令文件的位置
 
@@ -13,7 +13,7 @@ system_prompt_file = "prompts/system.md" #系统指令文件的位置
 directory = "trajectories" #日志保存目录
 
 [permission]
-shell = "ask"
+shell = "allow"
 read_file = "allow"
 write_file = "ask"
 delete_file = "deny"

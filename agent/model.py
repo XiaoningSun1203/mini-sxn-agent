@@ -30,10 +30,12 @@ class DeepSeekModel(Model):
 
         self.model_config = model_config
 
+        api_key_env=os.environ[self.model_config.api_key_env]
         self.client = OpenAI(
-            api_key=os.environ[self.model_config.api_key_env],
+            api_key=api_key_env,
             base_url=self.model_config.base_url
         )
+
 
     # Model Adaptor
     #转换函数，把 “我们的消息”转换成deepseek api能识别的

@@ -4,8 +4,8 @@ from .tools import ToolRegistry
 from .trajectory import Trajectory
 from .configLoader import AgentConfig
 from .approvalController import ApprovalController
-from .configLoader import PermissionConfig
-from .permissionController import PermissionController, PermissionDecision
+from .configLoader import PermissionConfig, PermissionDecision
+from .permissionController import PermissionController
 
 class Agent:
 
@@ -80,19 +80,27 @@ class Agent:
                 permission = permission_controller.check(tool_call.tool)
 
                 if permission == PermissionDecision.ASK:
+                    # 询问user
                     approval_decision = approval.query_user_approval()
- 
+
                 if permission == PermissionDecision.ALLOW or (
                    permission == PermissionDecision.ASK and approval_decision == True):
+                    # execute tool call
                     observation = self.tools.execute(tool_call)
                 else:
+                    observation_content = str()
+                    if permission == PermissionDecision.DENY:
+                        # tool call 被系统配置的permission拒绝
+                        observation_content = "Tool execution denied by system permission config policy."
+                    if permission == PermissionDecision.ASK and approval_decision == True:
+                        # tool call 被 user 拒绝
+                        observation_content = "Tool execution denied by user."
                     observation = Observation(
                         tool=tool_call.tool,
                         tool_call_id=tool_call.tool_call_id,
-                        content="Tool execution denied by policy/user.",
+                        content=observation_content,
                         success=False,
                     )
-                
 
                 self.messages.append(observation)
                 trajectory.record_toolcall_result(observation)
@@ -104,5 +112,5 @@ class Agent:
     # 用户可以通过设置 step_mode = true 实现单步调试
     def _step_controller(self) -> None:
         if self.agent_config.step_mode:
-            input(f"[Press 'Enter' to continue ...")
+            input(f"[Press 'Enter' to continue ...]")
 

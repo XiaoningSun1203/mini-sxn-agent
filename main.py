@@ -17,7 +17,7 @@ with config_path.open("rb") as file:
 config_loader = ConfigLoader()
 agent_config = config_loader.get_agent_config(config["agent"])
 model_config = config_loader.get_model_config(config["model"])
-permission_config = config_loader.get_model_config(config["permission_config"])
+permission_config = config_loader.get_permission_config(config["permission"])
 trajectory_dir = (project_dir / config["trajectory"]["directory"]).resolve()
 
 environment = LocalEnvironment(working_dir=agent_config.working_dir, timeout=30)

@@ -1,10 +1,4 @@
-from enum import Enum
-from .configLoader import PermissionConfig
-
-class PermissionDecision(Enum):
-    ALLOW = "allow"  # 自动允许执行
-    ASK = "ask"      # 需要经过 ApprovalController
-    DENY = "deny"    # 直接拒绝执行
+from .configLoader import PermissionConfig, PermissionDecision
 
 
 class PermissionController:
