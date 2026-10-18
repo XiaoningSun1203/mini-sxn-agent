@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>mini-agent</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+<header>
+  <span class="dot" id="status-dot" title="服务状态"></span>
+  <span class="title">mini-agent</span>
+  <span class="model" id="model-name"></span>
+  <span class="spacer"></span>
+  <span class="ws" id="workspace-hint" title="agent 的工作目录"></span>
+</header>
+
+<main id="messages">
+  <div class="empty" id="empty-hint">
+    先在下面选一个凭据（没有就点「管理」新增一把），再输入任务。<br>
+    语音输入需要 Chrome / Edge。
+  </div>
+</main>
+
+<div id="speech-warn" class="warn" hidden></div>
+<div id="vault-warn" class="warn" hidden></div>
+
+<div id="composer">
+  <div id="cred-bar">
+    <span class="cred-label">凭据</span>
+    <select id="cred-select" title="要用的 API key"></select>
+    <button id="cred-manage" type="button">管理…</button>
+    <span class="cred-note" id="cred-note"></span>
+  </div>
+
+  <textarea id="task" rows="3"
+    placeholder="输入任务…（Ctrl / Cmd + Enter 发送）"></textarea>
+
+  <div class="actions">
+    <button id="mic-btn" type="button" title="语音输入">🎤 语音</button>
+    <span class="spacer"></span>
+    <button id="stop-btn" type="button" class="danger" hidden>停止</button>
+    <button id="send-btn" type="button" class="primary">发送</button>
+  </div>
+</div>
+
+<!-- 凭据柜。密钥只在这个框里出现一次，存进去以后就再也取不出来了。 -->
+<div id="vault-modal" hidden>
+  <div class="modal" role="dialog" aria-label="凭据柜">
+    <div class="modal-head">
+      <span class="modal-title">凭据柜</span>
+      <button id="vault-close" type="button" title="关闭">×</button>
+    </div>
+
+    <p class="modal-note" id="vault-protector"></p>
+    <p class="modal-note mono" id="vault-path"></p>
+
+    <div id="cred-list"></div>
+
+    <div class="modal-add">
+      <input id="cred-name" type="text" autocomplete="off" spellcheck="false"
+             placeholder="给它起个名字，例如 deepseek-正式">
+      <input id="cred-key" type="password" autocomplete="off" spellcheck="false"
+             placeholder="粘贴 API key">
+      <button id="cred-save" type="button" class="primary">存入</button>
+    </div>
+
+    <p class="modal-note small">
+      密钥只在点「存入」这一下经过网络，之后就再也读不出来了 ——
+      列表只回名字，没有任何接口能取回明文。要换 key 就删掉这条重新存一次。
+    </p>
+  </div>
+</div>
+
+<script src="/app.js"></script>
+</body>
+</html>

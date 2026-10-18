@@ -1,0 +1,30 @@
+# Python 字节码缓存
+__pycache__/
+*.py[cod]
+
+# agent 运行时产物：每次任务的轨迹文件，属于输出不属于源码
+trajectories/
+*.log
+
+# 网页界面里 agent 的工作目录（--workspace 默认落在这里）
+sandbox-workspace/
+
+# 虚拟环境
+.venv/
+venv/
+env/
+
+# 编辑器 / 系统
+.vscode/
+.idea/
+.DS_Store
+
+# 环境变量文件（万一有人把 key 写进去）
+.env
+.env.*
+
+# 界面预览页（由 webui/static/ 下的真实文件生成，
+# 留在仓库里会跟 app.js / style.css 悄悄对不上，需要时重新生成即可）
+网页界面-预览*.html
+网页界面-预览*.pdf
+网页界面-预览*.png
