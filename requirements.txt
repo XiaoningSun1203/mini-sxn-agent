@@ -1,3 +1,5 @@
+openai>=1.0.0
+
 # mini-sxn-agent 的运行时依赖
 #
 # 只有一个:项目通过 OpenAI 兼容接口调用 DeepSeek,
@@ -23,5 +25,3 @@
 # Note: Python >= 3.11 is also required -- main.py uses the stdlib tomllib
 # (added in 3.11), and messages.py uses X | Y union annotations (3.10+).
 # requirements.txt cannot constrain the interpreter version; this is a note only.
-
-openai>=1.0.0

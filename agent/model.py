@@ -5,6 +5,7 @@ from abc import ABC, abstractmethod
 from .messages import Message, AssistantMessage, Observation, ToolCall, HistoryItem
 from .tools import ToolRegistry
 from .trajectory import Trajectory
+from .configLoader import ModelConfig
 
 
 class Model(ABC):
@@ -22,17 +23,19 @@ class DeepSeekModel(Model):
     def __init__(
             self, 
             tools: ToolRegistry,
-            model_name: str,
-            base_url: str,
-            api_key_env: str):
+            model_config: ModelConfig
+    ):
         self.trajectory: Trajectory | None = None
         self.tools = tools
-        self.model_name = model_name
 
+        self.model_config = model_config
+
+        api_key_env=os.environ[self.model_config.api_key_env]
         self.client = OpenAI(
-            api_key=os.environ[api_key_env],
-            base_url=base_url
+            api_key=api_key_env,
+            base_url=self.model_config.base_url
         )
+
 
     # Model Adaptor
     #转换函数，把 “我们的消息”转换成deepseek api能识别的
@@ -103,7 +106,7 @@ class DeepSeekModel(Model):
         self.trajectory.record_model_input(api_messages)
 
         response = self.client.chat.completions.create(
-            model=self.model_name,
+            model=self.model_config.model_name,
             messages=api_messages,
             tools=self.tools.schemas()
         )
