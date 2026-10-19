@@ -92,7 +92,7 @@ class Agent:
                     if permission == PermissionDecision.DENY:
                         # tool call 被系统配置的permission拒绝
                         observation_content = "Tool execution denied by system permission config policy."
-                    if permission == PermissionDecision.ASK and approval_decision == True:
+                    if permission == PermissionDecision.ASK and approval_decision == False:
                         # tool call 被 user 拒绝
                         observation_content = "Tool execution denied by user."
                     observation = Observation(
