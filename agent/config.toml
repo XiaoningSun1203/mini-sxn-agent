@@ -11,3 +11,7 @@ system_prompt_file = "prompts/system.md" #系统指令文件的位置
 
 [trajectory]
 directory = "trajectories" #日志保存目录
+
+[github_mcp_server]
+access_token = GITHUB_TOKEN
+url = "https://api.githubcopilot.com/mcp/x/repos/readonly"
