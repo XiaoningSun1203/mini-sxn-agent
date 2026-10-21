@@ -1,4 +1,6 @@
 openai>=1.0.0
+mcp==2.3.0
+httpx2
 
 # mini-sxn-agent 的运行时依赖
 #
