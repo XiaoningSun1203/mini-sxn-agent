@@ -31,6 +31,9 @@ class DeepSeekModel(Model):
         self.model_config = model_config
 
         api_key_env=os.environ[self.model_config.api_key_env]
+        if not api_key_env:
+            raise RuntimeError(f"please export Model API key first!")
+
         self.client = OpenAI(
             api_key=api_key_env,
             base_url=self.model_config.base_url

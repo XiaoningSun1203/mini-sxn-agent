@@ -352,3 +352,18 @@ class WriteFileTool(Tool):
             success=True
         )
 
+
+class McpTool(Tool):
+    @property
+    def name(self) -> str:
+        return "mcp_tool"
+
+    #给 LLM 看的rule
+    @property
+    def description(self) -> str:
+        return "Tools get from MCP server."
+
+    #给 LLM 看的rule
+    @property
+    def parameters(self) -> dict[str, Any]:
+        pass

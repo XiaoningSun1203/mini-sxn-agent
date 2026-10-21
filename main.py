@@ -6,8 +6,13 @@ from agent.tools import ToolRegistry, ShellTool, ReadFileTool, WriteFileTool
 from agent.messages import Message
 from agent.environment import LocalEnvironment
 from agent.configLoader import ConfigLoader
+from agent.mcpClient import McpClient
 import tomllib
+import asyncio
 
+mcp_client = McpClient()
+await mcp_client.initialize()
+await mcp_client.list_tools()
 
 project_dir = Path(__file__).resolve().parent  #得到当前文件所在路径的上一级目录
 config_path = project_dir / "config.toml"
@@ -43,6 +48,7 @@ agent = Agent(
 result = agent.run("Read the trajectories directory, find the last finished file, "
                    "analyze and write a report.")
 print(result)
+mcp_client.close()
 
 # workspace = Path("sandbox-workspace")
 # workspace.mkdir(exist_ok=True)

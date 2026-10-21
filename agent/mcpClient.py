@@ -11,19 +11,56 @@
 # 4.调用 list_tools() 获取工具定义。
 # 5.调用 call_tool() 执行工具，处理结果。
 
-import asyncio
+import os
+import httpx2
+from contextlib import AsyncExitStack
 from mcp import ClientSession
-from mcp.client.streambleHTTP import streamble_http_client
+from mcp.client.streamable_http import streamable_http_client
 
 class McpClient:
     # def __init__(self, mcp_config: McpConfig):
         # self.access_token = mcp_config.access_token
         # self.url = mcp_config.url
     def __init__(self):
-        self.access_token = os.environ(GITHUB_TOKEN)
+        self.access_token = os.environ["GITHUB_TOKEN"]
         self.url = "https://api.githubcopilot.com/mcp/x/repos/readonly"
+        self.stack = AsyncExitStack()
+        self.session = None
 
-    def initialize(self):
+    async def initialize(self):
+
+        # 提供 HTTP 客户端
+        http_client = await self.stack.enter_async_context(
+            #创建了一个 httpx.AsyncClient 对象，并配置 HTTP 请求头
+            httpx2.AsyncClient(headers={"Authorization" : f"Bearer {self.access_token}"})
+        )
         
+        # 使用 HTTP 客户端, 提供读写通道.Connect to a streamable HTTP server
+        read_stream, write_stream, _ = await self.stack.enter_async_context(
+            streamable_http_client(self.url, http_client=http_client)
+        )
+ 
+        # Create a session. 使用读写通道，处理MCP请求
+        self.session = await self.stack.enter_async_context(read_stream, write_stream)
+
+        # MCP 初始化握手，交换协议版本、能力等信息，为后续请求做好准备
+        init_result = await self.session.initialize()
+        # 处理初始化异常
+
+                    #当 initialize() 执行完毕后，Python 会依次退出：
+                    # 1. ClientSession 的异步上下文。
+                    # 2. streamable_http_client 的异步上下文。
+                    # 3. httpx.AsyncClient 的异步上下文。
+
+    async def list_tools(self):
+        result = await self.session.list_tools()
+        print(type(result))
+        print(result.model_dump_json(indent=2))
+    
+    async def close(self):
+        await self.stack.aclose()
+
+    # def convertToolFormat(self):
+    #     # MCP fromat -> our ToolRegistory
 
         
