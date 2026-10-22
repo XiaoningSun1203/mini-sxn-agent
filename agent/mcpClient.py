@@ -72,8 +72,10 @@ class McpClient:
 
     async def list_tools(self):
         result = await self.session.list_tools()
-        print(type(result))
-        print(result.model_dump_json(indent=2))
+
+        text = result.model_dump_json(indent=2)
+        print("\n".join(text.splitlines()[:100]))
+
     
     async def close(self):
         await self.stack.aclose()
@@ -82,7 +84,15 @@ class McpClient:
         # 2. streamable_http_client 的异步上下文。
         # 3. httpx.AsyncClient 的异步上下文。
 
-    # def convertToolFormat(self):
-    #     # MCP fromat -> our ToolRegistory
+    def mcp_format_convert_to_model_schema_format(self):
+        # MCP fromat -> agent Tool schema
+        pass
+
+
+    def function_calling_format_convert_to_mcp_input(self):
+        # tool
+        pass
+
+    def mcp_output_convert_to_model_input_format(self):
 
         

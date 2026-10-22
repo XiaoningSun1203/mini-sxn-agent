@@ -75,7 +75,7 @@ class Agent:
 
             # 一次 AssistantMessage 可能有多个 ToolCall
             for tool_call in assistant_message.tool_calls:
-                # TODO :permissionController + approval
+                # permissionController + approval
                 permission_controller = PermissionController(self.permission_config)
                 permission = permission_controller.check(tool_call.tool)
 
@@ -101,6 +101,15 @@ class Agent:
                         content=observation_content,
                         success=False,
                     )
+                
+                # Tool discovery
+                # TODO: 如果是 MCP 类型的 Function calling，需要更新 agent的工具说明书
+
+                self.tools.tool_discovery(mcp_tool_list)
+
+
+
+
 
                 self.messages.append(observation)
                 trajectory.record_toolcall_result(observation)

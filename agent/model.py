@@ -111,14 +111,14 @@ class DeepSeekModel(Model):
         response = self.client.chat.completions.create(
             model=self.model_config.model_name,
             messages=api_messages,
-            tools=self.tools.schemas()
+            tools=self.tools.schemas()  # 每次调用model时读取当时 ToolRegistory的schema
         )
 
         assistant_message = response.choices[0].message
 
         self.trajectory.record_model_output(assistant_message)
 
-        #此处涉及从 LLM response 转换成我们的AssistantMessage
+        # 此处涉及从 LLM response 转换成我们的AssistantMessage
         tool_calls = []
         if assistant_message.tool_calls is not None:
             for call in assistant_message.tool_calls:

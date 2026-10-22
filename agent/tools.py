@@ -80,6 +80,12 @@ class ToolRegistry:
 
         return schemas
 
+#sxn
+    def tool_discovery(self, new_tools: list[dict[str, Any]]):
+        for tool in new_tools:
+            self._tools.register(tool)
+
+
 
     def execute(self, tool_call: ToolCall) -> Observation:
         # 1. 根据 tool_call.tool 找 Tool

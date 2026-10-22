@@ -69,6 +69,6 @@ async def main():
     finally:
         await mcp_client.close()
 
-# 保证MCP client 的初始化、工具发现、调用和关闭都在同一个事件循环中
+# 保证MCP client 的初始化、工具发现、调用和关闭都在同一个 Event Loop 中
 asyncio.run(main())
 
